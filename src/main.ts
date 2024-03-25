@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
-import {syncTemplate} from './sync-template'
-import {createPullRequest} from './create-pull-request'
+import { syncTemplate } from './sync-template'
+import { createPullRequest } from './create-pull-request'
 
 export const splitPattern = (pattern: string): string[] => {
   return pattern

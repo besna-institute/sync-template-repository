@@ -1,205 +1,6 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 3780:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createPullRequest = void 0;
-const github = __importStar(__nccwpck_require__(5438));
-const createPullRequest = async ({ token, targetRepository, branchName, baseBranch, targetBranch }) => {
-    const octokit = github.getOctokit(token);
-    const response = await octokit.rest.pulls.list({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        head: branchName,
-        base: baseBranch
-    });
-    if (response.data.length > 0) {
-        return;
-    }
-    await octokit.rest.pulls.create({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        head: branchName,
-        base: baseBranch,
-        title: `Sync code with ${targetRepository}`,
-        body: `Sync code with [${targetRepository}](https://github.com/${targetRepository}/tree/${targetBranch})`
-    });
-};
-exports.createPullRequest = createPullRequest;
-
-
-/***/ }),
-
-/***/ 3109:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.splitPattern = void 0;
-const core = __importStar(__nccwpck_require__(2186));
-const sync_template_1 = __nccwpck_require__(7312);
-const create_pull_request_1 = __nccwpck_require__(3780);
-const splitPattern = (pattern) => {
-    return pattern
-        .split(/(?<!\s"\w*)\s(?!\w*"\s)/)
-        .map(item => item.replaceAll(/^"|"$/g, ''))
-        .filter(item => item !== '');
-};
-exports.splitPattern = splitPattern;
-async function run() {
-    try {
-        const token = core.getInput('repo_token');
-        const targetRepository = core.getInput('target_repository');
-        const targetBranch = core.getInput('target_branch') || 'main';
-        const branchName = core.getInput('branch_name') || 'sync-template-repository';
-        const baseBranch = core.getInput('base_branch') || 'main';
-        const includePatterns = (0, exports.splitPattern)(core.getInput('include_patterns')).filter(pattern => pattern !== '') || ['**/*'];
-        const excludePatterns = (0, exports.splitPattern)(core.getInput('exclude_patterns')).filter(pattern => pattern !== '') || [];
-        const result = await (0, sync_template_1.syncTemplate)({
-            includePatterns,
-            excludePatterns,
-            baseBranch,
-            branchName,
-            targetRepository,
-            targetBranch
-        });
-        if (result.isNothingToCommit) {
-            return;
-        }
-        await (0, create_pull_request_1.createPullRequest)({
-            token,
-            branchName,
-            baseBranch,
-            targetRepository,
-            targetBranch
-        });
-    }
-    catch (error) {
-        if (error instanceof Error)
-            core.setFailed(error.message);
-    }
-}
-run();
-
-
-/***/ }),
-
-/***/ 7312:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.syncTemplate = void 0;
-const exec_1 = __nccwpck_require__(1514);
-const syncTemplate = async ({ includePatterns, excludePatterns, baseBranch, branchName, targetRepository, targetBranch }) => {
-    await (0, exec_1.exec)('git', ['fetch', '--all']);
-    await (0, exec_1.exec)('git', [
-        'checkout',
-        '-t',
-        '-b',
-        baseBranch,
-        `origin/${baseBranch}`
-    ]);
-    await (0, exec_1.exec)('git', ['checkout', '-b', branchName]);
-    await (0, exec_1.exec)('git', [
-        'remote',
-        'add',
-        'template',
-        `https://github.com/${targetRepository}.git`
-    ]);
-    await (0, exec_1.exec)('git', ['fetch', '--no-tags', 'template']);
-    await (0, exec_1.exec)('git', [
-        'diff',
-        '--output=update.patch',
-        '--full-index',
-        branchName,
-        `template/${targetBranch}`
-    ]);
-    await (0, exec_1.exec)('git', ['apply', 'update.patch']);
-    await (0, exec_1.exec)('rm', ['update.patch']);
-    await (0, exec_1.exec)('git', ['config', 'user.name', 'github-actions']);
-    await (0, exec_1.exec)('git', ['config', 'user.email', 'github-actions@github.com']);
-    await (0, exec_1.exec)('git', [
-        'add',
-        ...includePatterns.map(pattern => `:(glob)${pattern}`),
-        ...excludePatterns.map(pattern => `:(glob,exclude)${pattern}`),
-        ':(glob,exclude).github/workflows'
-    ]);
-    try {
-        await (0, exec_1.exec)('git', [
-            'commit',
-            '-m',
-            `Sync code with https://github.com/${targetRepository}/tree/${targetBranch}`
-        ]);
-    }
-    catch {
-        return {
-            isNothingToCommit: true
-        };
-    }
-    await (0, exec_1.exec)('git', ['push', '-f', '--set-upstream', 'origin', branchName]);
-    await (0, exec_1.exec)('git', ['checkout', '.']);
-    return {
-        isNothingToCommit: false
-    };
-};
-exports.syncTemplate = syncTemplate;
-
-
-/***/ }),
-
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -30402,6 +30203,205 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 3964:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createPullRequest = void 0;
+const github = __importStar(__nccwpck_require__(5438));
+const createPullRequest = async ({ token, targetRepository, branchName, baseBranch, targetBranch }) => {
+    const octokit = github.getOctokit(token);
+    const response = await octokit.rest.pulls.list({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        head: branchName,
+        base: baseBranch
+    });
+    if (response.data.length > 0) {
+        return;
+    }
+    await octokit.rest.pulls.create({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        head: branchName,
+        base: baseBranch,
+        title: `Sync code with ${targetRepository}`,
+        body: `Sync code with [${targetRepository}](https://github.com/${targetRepository}/tree/${targetBranch})`
+    });
+};
+exports.createPullRequest = createPullRequest;
+
+
+/***/ }),
+
+/***/ 399:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.splitPattern = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const sync_template_1 = __nccwpck_require__(3985);
+const create_pull_request_1 = __nccwpck_require__(3964);
+const splitPattern = (pattern) => {
+    return pattern
+        .split(/(?<!\s"\w*)\s(?!\w*"\s)/)
+        .map(item => item.replaceAll(/^"|"$/g, ''))
+        .filter(item => item !== '');
+};
+exports.splitPattern = splitPattern;
+async function run() {
+    try {
+        const token = core.getInput('repo_token');
+        const targetRepository = core.getInput('target_repository');
+        const targetBranch = core.getInput('target_branch') || 'main';
+        const branchName = core.getInput('branch_name') || 'sync-template-repository';
+        const baseBranch = core.getInput('base_branch') || 'main';
+        const includePatterns = (0, exports.splitPattern)(core.getInput('include_patterns')).filter(pattern => pattern !== '') || ['**/*'];
+        const excludePatterns = (0, exports.splitPattern)(core.getInput('exclude_patterns')).filter(pattern => pattern !== '') || [];
+        const result = await (0, sync_template_1.syncTemplate)({
+            includePatterns,
+            excludePatterns,
+            baseBranch,
+            branchName,
+            targetRepository,
+            targetBranch
+        });
+        if (result.isNothingToCommit) {
+            return;
+        }
+        await (0, create_pull_request_1.createPullRequest)({
+            token,
+            branchName,
+            baseBranch,
+            targetRepository,
+            targetBranch
+        });
+    }
+    catch (error) {
+        if (error instanceof Error)
+            core.setFailed(error.message);
+    }
+}
+run();
+
+
+/***/ }),
+
+/***/ 3985:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.syncTemplate = void 0;
+const exec_1 = __nccwpck_require__(1514);
+const syncTemplate = async ({ includePatterns, excludePatterns, baseBranch, branchName, targetRepository, targetBranch }) => {
+    await (0, exec_1.exec)('git', ['fetch', '--all']);
+    await (0, exec_1.exec)('git', [
+        'checkout',
+        '-t',
+        '-b',
+        baseBranch,
+        `origin/${baseBranch}`
+    ]);
+    await (0, exec_1.exec)('git', ['checkout', '-b', branchName]);
+    await (0, exec_1.exec)('git', [
+        'remote',
+        'add',
+        'template',
+        `https://github.com/${targetRepository}.git`
+    ]);
+    await (0, exec_1.exec)('git', ['fetch', '--no-tags', 'template']);
+    await (0, exec_1.exec)('git', [
+        'diff',
+        '--output=update.patch',
+        '--full-index',
+        branchName,
+        `template/${targetBranch}`
+    ]);
+    await (0, exec_1.exec)('git', ['apply', 'update.patch']);
+    await (0, exec_1.exec)('rm', ['update.patch']);
+    await (0, exec_1.exec)('git', ['config', 'user.name', 'github-actions']);
+    await (0, exec_1.exec)('git', ['config', 'user.email', 'github-actions@github.com']);
+    await (0, exec_1.exec)('git', [
+        'add',
+        ...includePatterns.map(pattern => `:(glob)${pattern}`),
+        ...excludePatterns.map(pattern => `:(glob,exclude)${pattern}`),
+        ':(glob,exclude).github/workflows'
+    ]);
+    try {
+        await (0, exec_1.exec)('git', [
+            'commit',
+            '-m',
+            `Sync code with https://github.com/${targetRepository}/tree/${targetBranch}`
+        ]);
+    }
+    catch {
+        return {
+            isNothingToCommit: true
+        };
+    }
+    await (0, exec_1.exec)('git', ['push', '-f', '--set-upstream', 'origin', branchName]);
+    await (0, exec_1.exec)('git', ['checkout', '.']);
+    return {
+        isNothingToCommit: false
+    };
+};
+exports.syncTemplate = syncTemplate;
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -32309,7 +32309,7 @@ module.exports = parseParams
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(399);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()

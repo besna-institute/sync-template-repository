@@ -1,4 +1,4 @@
-import {exec} from '@actions/exec'
+import { exec } from '@actions/exec'
 
 interface SyncTemplateOptions {
   includePatterns: string[]

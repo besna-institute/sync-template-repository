@@ -1,9 +1,11 @@
 # sync-template-repository
 
 ## Usage
+
 See [action.yml](action.yml)
 
 Scheduled sync:
+
 ```yaml
 name: Sync template repository
 
@@ -29,6 +31,7 @@ jobs:
 ```
 
 Manual sync:
+
 ```yaml
 name: Sync template repository
 
@@ -56,4 +59,3 @@ jobs:
           include_patterns: ${{ inputs.include_patterns }}
           exclude_patterns: ${{ inputs.exclude_patterns }}
 ```
-

@@ -1,5 +1,5 @@
-import {describe, expect, test} from 'vitest'
-import {splitPattern} from '../src/main'
+import { describe, expect, test } from 'vitest'
+import { splitPattern } from '../src/main'
 
 describe('splitPattern', () => {
   test('It should return empty array, if input is empty string', () => {
