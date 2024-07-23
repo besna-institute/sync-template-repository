@@ -41,7 +41,7 @@
     "eslint-plugin-jest": "^28.5.0",
     "js-yaml": "^4.1.0",
     "prettier": "^3.3.2",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.4",
     "vitest": "^1.6.0"
   }
 }
